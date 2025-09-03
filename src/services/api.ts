@@ -11,9 +11,15 @@ const api = axios.create({
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('auth_token');
   if (token) {
+    // debug in dev only
+    try {
+      if (import.meta.env.MODE === 'development') console.debug('[api] attaching token to request');
+    } catch {}
     // headers typing in axios internal config is strict; cast to any for safe assignment
     if (!config.headers) config.headers = {} as any;
     (config.headers as any)['Authorization'] = `Bearer ${token}`;
+  } else {
+    try { if (import.meta.env.MODE === 'development') console.debug('[api] no token found for request'); } catch {}
   }
   return config;
 });
@@ -27,7 +33,7 @@ api.interceptors.response.use(
       try {
         useAuthStore.getState().logout();
       } catch {}
-      window.location.href = '/login';
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }

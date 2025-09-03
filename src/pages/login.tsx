@@ -26,7 +26,18 @@ export default function LoginPage() {
   }, [token, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
+    try {
+      if (import.meta.env.MODE === "development")
+        console.debug("[login.page] form submit", data);
+    } catch {}
     await login(data.email, data.password);
+    // inspect store token after login attempt (dev only)
+    try {
+      if (import.meta.env.MODE === "development") {
+        const token = useAuthStore.getState().token;
+        console.debug("[login.page] store token after login:", token);
+      }
+    } catch (e) {}
   };
 
   return (

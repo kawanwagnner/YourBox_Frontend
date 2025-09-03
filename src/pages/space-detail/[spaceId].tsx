@@ -32,22 +32,26 @@ export default function SpaceDetailPage() {
     if (!socket) return;
 
     const onCreated = (item: any) => {
+      if (!item) return; // ignore malformed payloads
       // prepend to cache
       qc.setQueryData(["items", spaceId], (old: any) => {
-        if (!old) return old;
+        if (!old || !old.pages || !Array.isArray(old.pages)) return old;
         const pages = [...old.pages];
-        pages[0] = { ...pages[0], items: [item, ...pages[0].items] };
+        pages[0] = { ...pages[0], items: [item, ...(pages[0]?.items || [])] };
         return { ...old, pages };
       });
     };
 
-    const onDeleted = (payload: { id: string }) => {
-      const id = payload.id;
+    const onDeleted = (payload: any) => {
+      // payload may be { id } or a string id or undefined
+      const id =
+        typeof payload === "string" ? payload : payload?.id ?? payload?._id;
+      if (!id) return; // nothing to do
       qc.setQueryData(["items", spaceId], (old: any) => {
-        if (!old) return old;
+        if (!old || !old.pages || !Array.isArray(old.pages)) return old;
         const pages = old.pages.map((p: any) => ({
           ...p,
-          items: p.items.filter((it: any) => it._id !== id),
+          items: (p.items || []).filter((it: any) => it._id !== id),
         }));
         return { ...old, pages };
       });
